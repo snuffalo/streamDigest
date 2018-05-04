@@ -21,5 +21,5 @@ An API for a digest of a livestream
 
 # Doin' Stuff
 (Note: Nothing is implemented currently in the web app, only the framework)
-* if you ran `make env`, you can `echo $(minikube service protocbas --url)` to get the url to reach the app
+* if you ran `make env`, you can `echo $(minikube service streamdigest --url)` to get the url to reach the app
 * if you ran `make`, you can now start the exectuable found in `bin/local` or debug it
