@@ -1,37 +1,37 @@
 BIN_ROOT = bin
-BIN_NAME = protocbas
-CLEANABLE_FILES = bin cmd logs models restapi/restapi/operations  restapi/doc.go restapi/embedded_spec.go restapi/server.go
+BIN_NAME = streamdigest
+CLEANABLE_FILES = bin cmd logs models restapi
+KUBERNETES_CONFIG = ./streamdigest_deploy.yaml
 MAIN_FILE = cmd/$(SERVER_NAME)-server/main.go
-SERVER_NAME = protocbas
+SERVER_NAME = streamdigest
 SWAGGER_FILE = ./swagger.yml
 
 default: BIN_SUB = local
-default: general
+default: validate generate localbuild move
 
-test: BIN_SUB = linux_amd64
-test: export GOOS=linux
-test: export GOARCH=amd64
-test: general docker kubernetes
-
-run: test
-
-general: validate generate gobuild move
+env: BIN_SUB = scratch
+env: validate generate scratchbuild move docker kubernetes
 
 validate:
 	swagger validate $(SWAGGER_FILE)
 generate:
-	swagger generate server -A $(SERVER_NAME) -f $(SWAGGER_FILE) && mkdir -p $(BIN_ROOT) && mkdir -p $(BIN_ROOT)/$(BIN_SUB)
-gobuild:
+	swagger generate server -A $(SERVER_NAME) -f $(SWAGGER_FILE)
+scratchbuild:
+	CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-s' -installsuffix cgo -o $(BIN_NAME) $(MAIN_FILE)
+localbuild:
 	go build -o $(BIN_NAME) $(MAIN_FILE)
 move:
-	mv -f $(BIN_NAME) $(BIN_ROOT)/$(BIN_SUB)/$(BIN_NAME)
+	mkdir -p $(BIN_ROOT) && mkdir -p $(BIN_ROOT)/$(BIN_SUB) && mv -f $(BIN_NAME) $(BIN_ROOT)/$(BIN_SUB)/$(BIN_NAME)
 docker:
 	$(eval $(minikube docker-env))
-	docker build -t protocbas:experimental . -f Dockerfile.protocbas
+	docker build -t streamdigest:experimental . -f Dockerfile.streamdigest
 kubernetes:
-	kubectl create -f protocbas_deploy.yaml
+	$(eval $(minikube docker-env))
+	kubectl create -f $(KUBERNETES_CONFIG)
 clean:
-	rm -rf $(CLEANABLE_FILES) && docker system prune -f
+	$(eval $(minikube docker-env))
+	rm -rf $(CLEANABLE_FILES)
 cleanall:
-	clean
-	kubernetes destroy -t protocbas_deploy.yaml
+	$(eval $(minikube docker-env))
+	kubectl delete -f $(KUBERNETES_CONFIG)
+cleanall: clean

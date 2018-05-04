@@ -1,0 +1,5 @@
+FROM scratch
+
+COPY bin/scratch/streamdigest /
+
+CMD ["/streamdigest",  "--host",  "0.0.0.0",  "--port",  "15000"]

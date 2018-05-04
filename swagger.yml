@@ -1,9 +1,9 @@
 ---
   swagger: "2.0"
   info:
-    description: StreamDigest
-    title: StreamDigest
-    version: 0.1.1
+    description: A Digest for a livestream
+    title: Stream Digest
+    version: 0.1.0
   schemes:
   - http
   consumes:
