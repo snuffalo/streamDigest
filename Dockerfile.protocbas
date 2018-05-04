@@ -1,0 +1,5 @@
+FROM golang
+
+COPY bin/linux_amd64/protocbas /usr/local/bin/protocbas
+
+CMD protocbas --host 0.0.0.0 --port 15000

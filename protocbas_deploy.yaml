@@ -1,0 +1,33 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: protocbas
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: protocbas
+    spec:
+      containers:
+      - name: protocbas
+        image: protocbas:experimental
+        ports:
+          - containerPort: 15000
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    service: protocbas
+  name: protocbas
+spec:
+  type: NodePort
+  ports:
+  - port: 15000
+  selector:
+    app: protocbas

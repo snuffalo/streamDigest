@@ -1,0 +1,38 @@
+---
+  swagger: "2.0"
+  info:
+    description: StreamDigest
+    title: StreamDigest
+    version: 0.1.1
+  schemes:
+  - http
+  consumes:
+  - application/json
+  produces:
+  - application/json
+  paths:
+    /:
+      get:
+        tags:
+          - splash
+        operationId: getSplash
+        responses:
+          200:
+            description: get splash message
+            schema:
+              $ref: "#/definitions/Splash"
+          default:
+            description: unexpected error
+            schema:
+              $ref: "#/definitions/UnexpectedError"
+  definitions:
+    Splash:
+      type: "object"
+      properties:
+        message:
+          type: "string"
+    UnexpectedError:
+      type: "object"
+      properties:
+        message:
+          type: "string"
