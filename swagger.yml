@@ -11,22 +11,31 @@
   produces:
   - application/json
   paths:
-    /:
+    /digest/{streamerId}:
       get:
         tags:
-          - splash
-        operationId: getSplash
+          - digest
+        summary: "find a digest by streamer id"
+        description: "returns a digest of a given streamer"
+        operationId: getDigestByStreamerId
+        parameters:
+          - name: "streamerId"
+            in: "path"
+            description: "ID of the streamer"
+            required: true
+            type: "integer"
+            format: "uint64"
         responses:
           200:
             description: get splash message
             schema:
-              $ref: "#/definitions/Splash"
+              $ref: "#/definitions/Digest"
           default:
             description: unexpected error
             schema:
               $ref: "#/definitions/UnexpectedError"
   definitions:
-    Splash:
+    Digest:
       type: "object"
       properties:
         message:
