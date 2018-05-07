@@ -14,11 +14,15 @@ import (
 	"github.com/snuffalo/streamDigest/restapi/operations"
 	"github.com/snuffalo/streamDigest/restapi/operations/digest"
 	"github.com/snuffalo/streamDigest/impl"
+	"github.com/snuffalo/streamDigest/models"
+	"strconv"
 )
 
 // This file is safe to edit. Once it exists it will not be overwritten
 
 //go:generate swagger generate server --target .. --name streamdigest --spec ../swagger.yml
+
+const BASE_TEN = 10
 
 func configureFlags(api *operations.StreamdigestAPI) {
 	// api.CommandLineOptionsGroups = []swag.CommandLineOptionsGroup{ ... }
@@ -47,7 +51,7 @@ func configureAPI(api *operations.StreamdigestAPI) http.Handler {
 		if success {
 			return digest.NewAddClipByStreamerIDCreated()
 		} else {
-			return digest.NewAddClipByStreamerIDDefault(409)
+			return digest.NewAddClipByStreamerIDConflict().WithPayload(&models.DuplicateClip{Message: "Duplicate clip \"" + params.Clip.URL + "\" for streamer id \"" + strconv.FormatUint(params.StreamerID, BASE_TEN) + "\"."})
 		}
 	})
 

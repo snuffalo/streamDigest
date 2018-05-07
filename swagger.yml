@@ -34,6 +34,10 @@
         responses:
           201:
             description: successfully added clip
+          409:
+            description: clip already added to digest
+            schema:
+              $ref: "#/definitions/DuplicateClip"
           default:
             description: unexpected error
             schema:
@@ -75,6 +79,14 @@
           type: string
           readOnly: true
           pattern: '^(https:\/\/www\.|https:\/\/)?neatclip.com/clip/[a-zA-Z0-9]{8}$'
+    DuplicateClip:
+      type: "object"
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          readOnly: true
     UnexpectedError:
       type: "object"
       properties:
