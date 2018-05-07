@@ -58,7 +58,7 @@
             format: "uint64"
         responses:
           200:
-            description: get splash message
+            description: get digest of a given streamer
             schema:
               $ref: "#/definitions/Digest"
           default:
