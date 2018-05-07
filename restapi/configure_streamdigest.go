@@ -6,13 +6,14 @@ import (
 	"crypto/tls"
 	"net/http"
 
-	errors "github.com/go-openapi/errors"
-	runtime "github.com/go-openapi/runtime"
-	middleware "github.com/go-openapi/runtime/middleware"
-	graceful "github.com/tylerb/graceful"
+	"github.com/go-openapi/errors"
+	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/runtime/middleware"
+	"github.com/tylerb/graceful"
 
 	"github.com/snuffalo/streamDigest/restapi/operations"
 	"github.com/snuffalo/streamDigest/restapi/operations/digest"
+	"github.com/snuffalo/streamDigest/impl"
 )
 
 // This file is safe to edit. Once it exists it will not be overwritten
@@ -38,7 +39,7 @@ func configureAPI(api *operations.StreamdigestAPI) http.Handler {
 	api.JSONProducer = runtime.JSONProducer()
 
 	api.DigestGetDigestByStreamerIDHandler = digest.GetDigestByStreamerIDHandlerFunc(func(params digest.GetDigestByStreamerIDParams) middleware.Responder {
-		return middleware.NotImplemented("operation digest.GetDigestByStreamerID has not yet been implemented")
+		return digest.NewGetDigestByStreamerIDOK().WithPayload(impl.GetDigestByStreamerId())
 	})
 
 	api.ServerShutdown = func() {}

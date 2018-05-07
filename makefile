@@ -1,6 +1,6 @@
 BIN_ROOT = bin
 BIN_NAME = streamdigest
-CLEANABLE_FILES = bin cmd logs models restapi
+CLEANABLE_FILES = bin cmd logs models restapi/operations restapi/doc.go restapi/embedded_spec.go restapi/server.go
 KUBERNETES_CONFIG = ./streamdigest_deploy.yaml
 MAIN_FILE = cmd/$(SERVER_NAME)-server/main.go
 SERVER_NAME = streamdigest
@@ -33,5 +33,5 @@ clean:
 	rm -rf $(CLEANABLE_FILES)
 cleanall:
 	$(eval $(minikube docker-env))
-	kubectl delete -f $(KUBERNETES_CONFIG)
+	kubectl delete -f $(KUBERNETES_CONFIG) && docker image rm streamdigest:experimental
 cleanall: clean
