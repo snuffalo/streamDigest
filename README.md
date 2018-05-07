@@ -5,7 +5,6 @@ An API for a digest of a livestream
 - go compiler (https://golang.org/doc/install)
 - docker (https://docs.docker.com/install/)
 - go swagger (https://github.com/go-swagger/go-swagger)
-- make sure you can reach the Fanatics Docker hub (https://wiki.fanatics.com/display/CLOUD/Docker+registry+V2+usage)
 - kubectl (`brew install kubectl`)
 - minikube (https://kubernetes.io/docs/getting-started-guides/minikube/#installation)
 
