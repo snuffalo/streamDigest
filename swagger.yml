@@ -73,8 +73,8 @@
       properties:
         url:
           type: string
-          format: url
           readOnly: true
+          pattern: '^(https:\/\/www\.|https:\/\/)?neatclip.com/clip/[a-zA-Z0-9]{8}$'
     UnexpectedError:
       type: "object"
       properties:
