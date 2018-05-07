@@ -43,8 +43,12 @@ func configureAPI(api *operations.StreamdigestAPI) http.Handler {
 	})
 
 	api.DigestAddClipByStreamerIDHandler = digest.AddClipByStreamerIDHandlerFunc(func(params digest.AddClipByStreamerIDParams) middleware.Responder{
-		impl.AddClipToDigestByStreamerId(params.Clip, params.StreamerID)
-		return digest.NewAddClipByStreamerIDCreated()
+		var success = impl.AddClipToDigestByStreamerId(params.Clip, params.StreamerID)
+		if success {
+			return digest.NewAddClipByStreamerIDCreated()
+		} else {
+			return digest.NewAddClipByStreamerIDDefault(409)
+		}
 	})
 
 	api.ServerShutdown = func() {}
