@@ -14,6 +14,16 @@ func GetDigestByStreamerId(id uint64) models.Digest  {
 	return response
 }
 
-func AddClipToDigestByStreamerId(c *models.Clip, id uint64) {
+func AddClipToDigestByStreamerId(c *models.Clip, id uint64) bool {
+	for _, clip := range m[id] {
+		if IsClipEqual(c, clip) {
+			return false
+		}
+	}
 	m[id] = append(m[id], c)
+	return true
+}
+
+func IsClipEqual(a *models.Clip, b *models.Clip) bool {
+	return a.URL == b.URL
 }
