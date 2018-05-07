@@ -65,7 +65,7 @@
     Digest:
       type: "array"
       items:
-        type: string
+        $ref: "#/definitions/Clip"
     Clip:
       type: "object"
       required:

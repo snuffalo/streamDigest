@@ -8,7 +8,7 @@ func GetDigestByStreamerId(id uint64) models.Digest  {
 	var clips = m[id]
 	var response = models.Digest{}
 	for _, clip := range clips {
-		response = append(response, clip.URL)
+		response = append(response, clip)
 	}
 
 	return response
