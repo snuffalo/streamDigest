@@ -11,6 +11,33 @@
   produces:
   - application/json
   paths:
+    /clip/{streamerId}:
+      post:
+        tags:
+          - digest
+        summary: "add a clip to a streamer's digest by their streamer id"
+        description: "returns a response describing whether the attempted save was successful"
+        operationId: addClipByStreamerId
+        parameters:
+          - name: "streamerId"
+            in: "path"
+            description: "ID of the streamer"
+            required: true
+            type: "integer"
+            format: "uint64"
+          - name: "Clip"
+            in: "body"
+            description: "data on the clip to be added to the digest"
+            required: true
+            schema:
+              $ref: "#/definitions/Clip"
+        responses:
+          201:
+            description: successfully added clip
+          default:
+            description: unexpected error
+            schema:
+              $ref: "#/definitions/UnexpectedError"
     /digest/{streamerId}:
       get:
         tags:
@@ -36,10 +63,18 @@
               $ref: "#/definitions/UnexpectedError"
   definitions:
     Digest:
+      type: "array"
+      items:
+        type: string
+    Clip:
       type: "object"
+      required:
+        - url
       properties:
-        message:
-          type: "string"
+        url:
+          type: string
+          format: url
+          readOnly: true
     UnexpectedError:
       type: "object"
       properties:

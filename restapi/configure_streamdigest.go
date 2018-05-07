@@ -39,7 +39,12 @@ func configureAPI(api *operations.StreamdigestAPI) http.Handler {
 	api.JSONProducer = runtime.JSONProducer()
 
 	api.DigestGetDigestByStreamerIDHandler = digest.GetDigestByStreamerIDHandlerFunc(func(params digest.GetDigestByStreamerIDParams) middleware.Responder {
-		return digest.NewGetDigestByStreamerIDOK().WithPayload(impl.GetDigestByStreamerId())
+		return digest.NewGetDigestByStreamerIDOK().WithPayload(impl.GetDigestByStreamerId(params.StreamerID))
+	})
+
+	api.DigestAddClipByStreamerIDHandler = digest.AddClipByStreamerIDHandlerFunc(func(params digest.AddClipByStreamerIDParams) middleware.Responder{
+		impl.AddClipToDigestByStreamerId(params.Clip, params.StreamerID)
+		return digest.NewAddClipByStreamerIDCreated()
 	})
 
 	api.ServerShutdown = func() {}
