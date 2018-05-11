@@ -1,5 +1,5 @@
 FROM swaggerapi/swagger-ui
 
-COPY bar/swagger.json /app/swagger.json
+COPY swagger.yml /app/swagger.json
 
 CMD ["/bin/ash", "/usr/share/nginx/docker-run.sh"]
