@@ -15,10 +15,12 @@ An API for a digest of a livestream
     - Build a GO executable for streamdigest
     - Build a docker container around it
     - Run the docker in a kubernetes deployment behind a kubernetes service (wherever your kubectl is pointing)
+    - Run a swagger ui docker container for documentation
 
 - run a `make` from the root directory to get a plain executable capable of running on your machine (for simple debugging)
 
 # Doin' Stuff
 (Note: Nothing is implemented currently in the web app, only the framework)
 * if you ran `make env`, you can `echo $(minikube service streamdigest --url)` to get the url to reach the app
+* if you ran `make env`, you can `echo $(minikube service streamdigest-docs --url))` to get the url to reach the swagger ui
 * if you ran `make`, you can now start the exectuable found in `bin/local` or debug it
