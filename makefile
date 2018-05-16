@@ -26,6 +26,7 @@ docker:
 	$(eval $(minikube docker-env))
 	docker build -t streamdigest:experimental . -f Dockerfile.streamdigest
 	docker build -t streamdigestdocs:experimental . -f Dockerfile.streamdigest-docs
+	docker build -t dynamodb-local:experimental . -f Dockerfile.dynamodb-local
 kubernetes:
 	$(eval $(minikube docker-env))
 	kubectl create -f $(KUBERNETES_CONFIG)
@@ -34,5 +35,8 @@ clean:
 	rm -rf $(CLEANABLE_FILES)
 cleanall:
 	$(eval $(minikube docker-env))
-	kubectl delete -f $(KUBERNETES_CONFIG) && docker image rm streamdigest:experimental && docker image rm streamdigestdocs:experimental
+	kubectl delete -f $(KUBERNETES_CONFIG) && \
+	docker image rm streamdigest:experimental && \
+	docker image rm streamdigestdocs:experimental && \
+	docker image rm dynamodb-local:experimental
 cleanall: clean

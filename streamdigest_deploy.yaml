@@ -2,6 +2,24 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
+  name: dynamodb-local
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: dynamodb-local
+    spec:
+      containers:
+      - name: dynamodb-local
+        image: dynamodb-local:experimental
+        ports:
+          - containerPort: 8000
+      restartPolicy: Always
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
   name: streamdigest
 spec:
   replicas: 1
