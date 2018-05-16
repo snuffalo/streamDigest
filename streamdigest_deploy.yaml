@@ -12,7 +12,7 @@ spec:
     spec:
       containers:
       - name: dynamodb-local
-        image: dwmkerr/dynamodb
+        image: dynamodb-local:experimental
         ports:
           - containerPort: 8000
       restartPolicy: Always
