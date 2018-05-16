@@ -5,6 +5,10 @@ KUBERNETES_CONFIG = ./streamdigest_deploy.yaml
 MAIN_FILE = cmd/$(SERVER_NAME)-server/main.go
 SERVER_NAME = streamdigest
 SWAGGER_FILE = ./swagger.yml
+DOCKER_TLS_VERIFY=1
+DOCKER_HOST=tcp://192.168.99.100:2376
+DOCKER_CERT_PATH=/Users/brmacnee/.minikube/certs
+DOCKER_API_VERSION=1.23
 
 default: BIN_SUB = local
 default: validate generate localbuild move
@@ -23,18 +27,14 @@ localbuild:
 move:
 	mkdir -p $(BIN_ROOT) && mkdir -p $(BIN_ROOT)/$(BIN_SUB) && mv -f $(BIN_NAME) $(BIN_ROOT)/$(BIN_SUB)/$(BIN_NAME)
 docker:
-	$(eval $(minikube docker-env))
 	docker build -t streamdigest:experimental . -f Dockerfile.streamdigest
 	docker build -t streamdigestdocs:experimental . -f Dockerfile.streamdigest-docs
 	docker build -t dynamodb-local:experimental . -f Dockerfile.dynamodb-local
 kubernetes:
-	$(eval $(minikube docker-env))
 	kubectl create -f $(KUBERNETES_CONFIG)
 clean:
-	$(eval $(minikube docker-env))
 	rm -rf $(CLEANABLE_FILES)
 cleanall:
-	$(eval $(minikube docker-env))
 	kubectl delete -f $(KUBERNETES_CONFIG) && \
 	docker image rm streamdigest:experimental && \
 	docker image rm streamdigestdocs:experimental && \
