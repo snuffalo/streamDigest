@@ -19,6 +19,7 @@ import (
 	"database/sql"
 	"log"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/go-redis/redis"
 )
 
 // This file is safe to edit. Once it exists it will not be overwritten
@@ -42,9 +43,8 @@ func configureAPI(api *operations.StreamdigestAPI) http.Handler {
 	// api.Logger = log.Printf
 	api.Logger = log.Printf
 	api.Logger("Configuring streamdigest API...")
-	api.Logger("Connecting to Mysql server...")
 	db := connectToMysql(api.Logger)
-	api.Logger("Connected to Mysql server.")
+	connectToRedis(api.Logger)
 
 	api.JSONConsumer = runtime.JSONConsumer()
 
@@ -96,6 +96,23 @@ func setupGlobalMiddleware(handler http.Handler) http.Handler {
 	return handler
 }
 
+func connectToRedis(log func(string, ...interface{})) *redis.Client{
+	rc := redis.NewClient(&redis.Options{
+		Addr:"streamdigestredis:6379",
+		Password: "",
+		DB: 0})
+
+	log("Pinging redis for connection...")
+	_, err := rc.Ping().Result()
+	if (err == nil) {
+		log("Ping to redis successful.")
+		return rc
+	}
+
+	panic(err)
+
+}
+
 func connectToMysql(log func(string, ...interface{})) *sql.DB {
 	//Open doesn't actually try a connection
 	db, err := sql.Open("mysql", "root:password@tcp(mysql:3306)/streamDigest")
@@ -103,7 +120,7 @@ func connectToMysql(log func(string, ...interface{})) *sql.DB {
 		log("Pinging db for connection...")
 		err := db.Ping()
 		if err == nil {
-			log("Ping successful")
+			log("Ping to mysql successful")
 			return db
 		}
 		log("%s", err.Error())
