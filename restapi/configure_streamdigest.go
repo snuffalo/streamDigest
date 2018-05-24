@@ -18,7 +18,6 @@ import (
 	"strconv"
 	"database/sql"
 	"log"
-	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -33,7 +32,6 @@ func configureFlags(api *operations.StreamdigestAPI) {
 }
 
 func configureAPI(api *operations.StreamdigestAPI) http.Handler {
-	log.Printf("Configuring streamdigest...")
 	// configure the api here
 	api.ServeError = errors.ServeError
 
@@ -42,10 +40,11 @@ func configureAPI(api *operations.StreamdigestAPI) http.Handler {
 	//
 	// Example:
 	// api.Logger = log.Printf
-
-	log.Print("Connecting to Mysql server...")
-	db := connectToMysql()
-	log.Print("Connected to Mysql server.")
+	api.Logger = log.Printf
+	api.Logger("Configuring streamdigest API...")
+	api.Logger("Connecting to Mysql server...")
+	db := connectToMysql(api.Logger)
+	api.Logger("Connected to Mysql server.")
 
 	api.JSONConsumer = runtime.JSONConsumer()
 
@@ -56,7 +55,7 @@ func configureAPI(api *operations.StreamdigestAPI) http.Handler {
 	})
 
 	api.DigestAddClipByStreamerIDHandler = digest.AddClipByStreamerIDHandlerFunc(func(params digest.AddClipByStreamerIDParams) middleware.Responder{
-		var success = impl.AddClipToDigestByStreamerId(params.Clip, params.StreamerID, db)
+		var success = impl.AddClipToDigestByStreamerId(params.Clip, params.StreamerID, db, api.Logger)
 		if success {
 			return digest.NewAddClipByStreamerIDCreated()
 		} else {
@@ -93,17 +92,19 @@ func setupGlobalMiddleware(handler http.Handler) http.Handler {
 	return handler
 }
 
-func connectToMysql() *sql.DB {
+func connectToMysql(log func(string, ...interface{})) *sql.DB {
 	//Open doesn't actually try a connection
 	db, err := sql.Open("mysql", "root:password@tcp(mysql:3306)/streamDigest")
 	if (err == nil) {
-		_, err := db.Exec("USE streamDigest;")
+		log("Pinging db for connection...")
+		err := db.Ping()
 		if err == nil {
+			log("Ping successful")
 			return db
 		}
-		fmt.Printf("%s", err.Error())
+		log("%s", err.Error())
 		panic(err)
 	}
-	fmt.Printf("%s", err.Error())
+	log("%s", err.Error())
 	panic(err)
 }
