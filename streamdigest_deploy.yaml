@@ -29,6 +29,28 @@ spec:
         persistentVolumeClaim:
           claimName: mysql-pv-claim
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+spec:
+  ports:
+  - port: 3306
+  selector:
+    app: mysql
+  clusterIP: None
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pv-claim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3Gi
+---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
