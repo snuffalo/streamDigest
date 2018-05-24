@@ -1,0 +1,8 @@
+CREATE DATABASE streamDigest;
+USE streamDigest;
+CREATE TABLE `clips` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `streamerId` int(10) unsigned NOT NULL,
+  `url` varchar(40) NOT NULL,
+  PRIMARY KEY (`id`)
+);

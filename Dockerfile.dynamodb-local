@@ -1,3 +1,0 @@
-FROM dwmkerr/dynamodb
-
-ENTRYPOINT ["java", "-jar", "DynamoDBLocal.jar"]

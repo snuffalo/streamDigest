@@ -16,6 +16,9 @@ import (
 	"github.com/snuffalo/streamDigest/impl"
 	"github.com/snuffalo/streamDigest/models"
 	"strconv"
+	"database/sql"
+	"log"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 // This file is safe to edit. Once it exists it will not be overwritten
@@ -37,21 +40,30 @@ func configureAPI(api *operations.StreamdigestAPI) http.Handler {
 	//
 	// Example:
 	// api.Logger = log.Printf
+	api.Logger = log.Printf
+	api.Logger("Configuring streamdigest API...")
+	api.Logger("Connecting to Mysql server...")
+	db := connectToMysql(api.Logger)
+	api.Logger("Connected to Mysql server.")
 
 	api.JSONConsumer = runtime.JSONConsumer()
 
 	api.JSONProducer = runtime.JSONProducer()
 
 	api.DigestGetDigestByStreamerIDHandler = digest.GetDigestByStreamerIDHandlerFunc(func(params digest.GetDigestByStreamerIDParams) middleware.Responder {
-		return digest.NewGetDigestByStreamerIDOK().WithPayload(impl.GetDigestByStreamerId(params.StreamerID))
+		return digest.NewGetDigestByStreamerIDOK().WithPayload(impl.GetDigestByStreamerId(params.StreamerID, db))
 	})
 
 	api.DigestAddClipByStreamerIDHandler = digest.AddClipByStreamerIDHandlerFunc(func(params digest.AddClipByStreamerIDParams) middleware.Responder{
-		var success = impl.AddClipToDigestByStreamerId(params.Clip, params.StreamerID)
-		if success {
+		var res = impl.AddClipToDigestByStreamerId(params.Clip, params.StreamerID, db, api.Logger)
+		if res == impl.SUCCESS {
 			return digest.NewAddClipByStreamerIDCreated()
-		} else {
+		} else if res == impl.DUPLICATE_CLIP {
 			return digest.NewAddClipByStreamerIDConflict().WithPayload(&models.DuplicateClip{Message: "Duplicate clip \"" + params.Clip.URL + "\" for streamer id \"" + strconv.FormatUint(params.StreamerID, BASE_TEN) + "\"."})
+		} else if res == impl.INSERT_ERROR {
+			return digest.NewAddClipByStreamerIDDefault(500).WithPayload(&models.UnexpectedError{Message:"Unable to successfully insert to the database"})
+		} else {
+			return digest.NewAddClipByStreamerIDDefault(500).WithPayload(&models.UnexpectedError{Message:"Uh oh. Something went wrong"})
 		}
 	})
 
@@ -82,4 +94,21 @@ func setupMiddlewares(handler http.Handler) http.Handler {
 // So this is a good place to plug in a panic handling middleware, logging and metrics
 func setupGlobalMiddleware(handler http.Handler) http.Handler {
 	return handler
+}
+
+func connectToMysql(log func(string, ...interface{})) *sql.DB {
+	//Open doesn't actually try a connection
+	db, err := sql.Open("mysql", "root:password@tcp(mysql:3306)/streamDigest")
+	if (err == nil) {
+		log("Pinging db for connection...")
+		err := db.Ping()
+		if err == nil {
+			log("Ping successful")
+			return db
+		}
+		log("%s", err.Error())
+		panic(err)
+	}
+	log("%s", err.Error())
+	panic(err)
 }
