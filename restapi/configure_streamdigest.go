@@ -51,15 +51,19 @@ func configureAPI(api *operations.StreamdigestAPI) http.Handler {
 	api.JSONProducer = runtime.JSONProducer()
 
 	api.DigestGetDigestByStreamerIDHandler = digest.GetDigestByStreamerIDHandlerFunc(func(params digest.GetDigestByStreamerIDParams) middleware.Responder {
-		return digest.NewGetDigestByStreamerIDOK().WithPayload(impl.GetDigestByStreamerId(params.StreamerID))
+		return digest.NewGetDigestByStreamerIDOK().WithPayload(impl.GetDigestByStreamerId(params.StreamerID, db))
 	})
 
 	api.DigestAddClipByStreamerIDHandler = digest.AddClipByStreamerIDHandlerFunc(func(params digest.AddClipByStreamerIDParams) middleware.Responder{
-		var success = impl.AddClipToDigestByStreamerId(params.Clip, params.StreamerID, db, api.Logger)
-		if success {
+		var res = impl.AddClipToDigestByStreamerId(params.Clip, params.StreamerID, db, api.Logger)
+		if res == impl.SUCCESS {
 			return digest.NewAddClipByStreamerIDCreated()
-		} else {
+		} else if res == impl.DUPLICATE_CLIP {
 			return digest.NewAddClipByStreamerIDConflict().WithPayload(&models.DuplicateClip{Message: "Duplicate clip \"" + params.Clip.URL + "\" for streamer id \"" + strconv.FormatUint(params.StreamerID, BASE_TEN) + "\"."})
+		} else if res == impl.INSERT_ERROR {
+			return digest.NewAddClipByStreamerIDDefault(500).WithPayload(&models.UnexpectedError{Message:"Unable to successfully insert to the database"})
+		} else {
+			return digest.NewAddClipByStreamerIDDefault(500).WithPayload(&models.UnexpectedError{Message:"Uh oh. Something went wrong"})
 		}
 	})
 
