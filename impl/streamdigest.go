@@ -5,24 +5,38 @@ import (
 	"database/sql"
 	"fmt"
 	"strconv"
+	"github.com/go-redis/redis"
 )
 
-
-var m = make(map[uint64][]*models.Clip)
 var primed = false
 
-func GetDigestByStreamerId(id uint64, db *sql.DB) models.Digest  {
+func setClipInCache(id uint64, url string, r *redis.Client) {
+	_, err := r.LPush(string(id), url).Result()
+	if (err != nil) {
+		panic(err.Error())
+	}
+}
+
+func getDigestInCache(id uint64, r *redis.Client) models.Digest {
+	results, err := r.LRange(string(id), 0, -1).Result()
+	if err != nil {
+		panic(err.Error())
+	}
+
+	var digest = models.Digest{}
+	for _, result := range results {
+		digest = append(digest, &models.Clip{URL:result})
+	}
+
+	return digest
+}
+
+func GetDigestByStreamerId(id uint64, db *sql.DB, r *redis.Client) models.Digest  {
 	if !primed {
-		primeCache(db)
+		primeCache(db, r)
 	}
 
-	var clips = m[id]
-	var response = models.Digest{}
-	for _, clip := range clips {
-		response = append(response, clip)
-	}
-
-	return response
+	return getDigestInCache(id, r)
 }
 
 type AddClipToDigestByStreamerIdResult uint8
@@ -32,17 +46,19 @@ const (
 	INSERT_ERROR AddClipToDigestByStreamerIdResult = 2
 )
 
-func AddClipToDigestByStreamerId(c *models.Clip, id uint64, db *sql.DB, log func(string, ...interface{})) AddClipToDigestByStreamerIdResult {
+func AddClipToDigestByStreamerId(c *models.Clip, id uint64, db *sql.DB, r *redis.Client, log func(string, ...interface{})) AddClipToDigestByStreamerIdResult {
 	if !primed {
-		primeCache(db)
+		primeCache(db, r)
 	}
 
-	for _, clip := range m[id] {
+	currentDigest := getDigestInCache(id, r)
+
+	for _, clip := range currentDigest {
 		if IsClipEqual(c, clip) {
 			return DUPLICATE_CLIP
 		}
 	}
-	m[id] = append(m[id], c)
+	setClipInCache(id, c.URL, r)
 	query := fmt.Sprintf("INSERT INTO clips (streamerId, url) VALUES(%d,\"%s\");",id, c.URL)
 	_, err := db.Exec(query)
 	if err == nil {
@@ -56,7 +72,7 @@ func IsClipEqual(a *models.Clip, b *models.Clip) bool {
 	return a.URL == b.URL
 }
 
-func primeCache(db *sql.DB) {
+func primeCache(db *sql.DB, r *redis.Client) {
 	stmt, err := db.Prepare("SELECT streamerId, url from clips;")
 	if err != nil {
 		panic(err.Error())
@@ -89,7 +105,8 @@ func primeCache(db *sql.DB) {
 		if err != nil {
 			panic(err.Error())
 		}
-		m[key] = append(m[key], &models.Clip{URL:string(values[1])})
+		//m[key] = append(m[key], &models.Clip{URL:string(values[1])})
+		setClipInCache(key, string(values[1]), r)
 	}
 	if err = rows.Err(); err != nil {
 		panic (err.Error())

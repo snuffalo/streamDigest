@@ -56,15 +56,13 @@ func configureAPI(api *operations.StreamdigestAPI) http.Handler {
 
 	db := <-dbchan
 	rc := <-rcchan
-	//TODO: remove this
-	rc.Ping()
 
 	api.DigestGetDigestByStreamerIDHandler = digest.GetDigestByStreamerIDHandlerFunc(func(params digest.GetDigestByStreamerIDParams) middleware.Responder {
-		return digest.NewGetDigestByStreamerIDOK().WithPayload(impl.GetDigestByStreamerId(params.StreamerID, db))
+		return digest.NewGetDigestByStreamerIDOK().WithPayload(impl.GetDigestByStreamerId(params.StreamerID, db, rc))
 	})
 
 	api.DigestAddClipByStreamerIDHandler = digest.AddClipByStreamerIDHandlerFunc(func(params digest.AddClipByStreamerIDParams) middleware.Responder{
-		var res = impl.AddClipToDigestByStreamerId(params.Clip, params.StreamerID, db, api.Logger)
+		var res = impl.AddClipToDigestByStreamerId(params.Clip, params.StreamerID, db, rc, api.Logger)
 		if res == impl.SUCCESS {
 			return digest.NewAddClipByStreamerIDCreated()
 		} else if res == impl.DUPLICATE_CLIP {
