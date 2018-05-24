@@ -10,6 +10,7 @@ An API for a digest of a livestream
 
 # Getting Started
 - make sure minikube is running locally and your kubectl is pointed at it.
+- run `. ./configure.sh` in the shell you intend to run commands from (if anyone knows a better way to do this, please advise!)
 
 - run a `make env` from the root directory of this project. It will
     - Build a GO executable for streamdigest

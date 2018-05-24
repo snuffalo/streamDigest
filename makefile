@@ -23,7 +23,7 @@ localbuild:
 move:
 	mkdir -p $(BIN_ROOT) && mkdir -p $(BIN_ROOT)/$(BIN_SUB) && mv -f $(BIN_NAME) $(BIN_ROOT)/$(BIN_SUB)/$(BIN_NAME)
 docker:
-	$(minikube docker-env)
+	minikube docker-env
 	docker build -t streamdigest:experimental . -f Dockerfile.streamdigest
 	docker build -t streamdigestdocs:experimental . -f Dockerfile.streamdigest-docs
 	docker build -t dynamodb-local:experimental . -f Dockerfile.dynamodb-local
@@ -32,7 +32,7 @@ kubernetes:
 clean:
 	rm -rf $(CLEANABLE_FILES)
 cleanall:
-	$(minikube docker-env)
+	minikube docker-env
 	kubectl delete -f $(KUBERNETES_CONFIG) && \
 	docker image rm streamdigest:experimental && \
 	docker image rm streamdigestdocs:experimental && \
