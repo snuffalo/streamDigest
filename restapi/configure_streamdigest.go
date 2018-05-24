@@ -19,6 +19,7 @@ import (
 	"database/sql"
 	"log"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/go-redis/redis"
 )
 
 // This file is safe to edit. Once it exists it will not be overwritten
@@ -41,21 +42,27 @@ func configureAPI(api *operations.StreamdigestAPI) http.Handler {
 	// Example:
 	// api.Logger = log.Printf
 	api.Logger = log.Printf
+
+	dbchan := make(chan *sql.DB, 1)
+	rcchan := make(chan *redis.Client, 1)
+
 	api.Logger("Configuring streamdigest API...")
-	api.Logger("Connecting to Mysql server...")
-	db := connectToMysql(api.Logger)
-	api.Logger("Connected to Mysql server.")
+	go connectToMysql(dbchan, api.Logger)
+	go connectToRedis(rcchan, api.Logger)
 
 	api.JSONConsumer = runtime.JSONConsumer()
 
 	api.JSONProducer = runtime.JSONProducer()
 
+	db := <-dbchan
+	rc := <-rcchan
+
 	api.DigestGetDigestByStreamerIDHandler = digest.GetDigestByStreamerIDHandlerFunc(func(params digest.GetDigestByStreamerIDParams) middleware.Responder {
-		return digest.NewGetDigestByStreamerIDOK().WithPayload(impl.GetDigestByStreamerId(params.StreamerID, db))
+		return digest.NewGetDigestByStreamerIDOK().WithPayload(impl.GetDigestByStreamerId(params.StreamerID, db, rc))
 	})
 
 	api.DigestAddClipByStreamerIDHandler = digest.AddClipByStreamerIDHandlerFunc(func(params digest.AddClipByStreamerIDParams) middleware.Responder{
-		var res = impl.AddClipToDigestByStreamerId(params.Clip, params.StreamerID, db, api.Logger)
+		var res = impl.AddClipToDigestByStreamerId(params.Clip, params.StreamerID, db, rc, api.Logger)
 		if res == impl.SUCCESS {
 			return digest.NewAddClipByStreamerIDCreated()
 		} else if res == impl.DUPLICATE_CLIP {
@@ -96,19 +103,40 @@ func setupGlobalMiddleware(handler http.Handler) http.Handler {
 	return handler
 }
 
-func connectToMysql(log func(string, ...interface{})) *sql.DB {
+func connectToRedis(rcc chan *redis.Client, log func(string, ...interface{})){
+	defer close(rcc)
+	rc := redis.NewClient(&redis.Options{
+		Addr:"streamdigestredis:6379",
+		Password: "",
+		DB: 0})
+
+	log("Pinging redis for connection...")
+	pong, err := rc.Ping().Result()
+	if pong == "PONG" {
+		log("Ping to redis successful.")
+		rcc <- rc
+	} else {
+		panic(err)
+	}
+
+}
+
+func connectToMysql(dbc chan *sql.DB, log func(string, ...interface{})) {
+	defer close(dbc)
 	//Open doesn't actually try a connection
 	db, err := sql.Open("mysql", "root:password@tcp(mysql:3306)/streamDigest")
 	if (err == nil) {
 		log("Pinging db for connection...")
 		err := db.Ping()
 		if err == nil {
-			log("Ping successful")
-			return db
+			log("Ping to mysql successful.")
+			 dbc <- db
+		} else {
+			log("%s", err.Error())
+			panic(err)
 		}
+	} else {
 		log("%s", err.Error())
 		panic(err)
 	}
-	log("%s", err.Error())
-	panic(err)
 }

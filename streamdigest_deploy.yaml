@@ -116,3 +116,35 @@ spec:
   - port: 8080
   selector:
     app: streamdigest-docs
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: streamdigestredis
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: streamdigestredis
+    spec:
+      containers:
+      - name: streamdigestredis
+        image: redis:alpine
+        ports:
+        - containerPort: 6379
+          name: redis
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: streamdigestredis
+spec:
+  ports:
+  - port: 6379
+  selector:
+      app: streamdigestredis
+  clusterIP: None
+---
