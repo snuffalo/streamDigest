@@ -16,6 +16,10 @@ import (
 	"github.com/snuffalo/streamDigest/impl"
 	"github.com/snuffalo/streamDigest/models"
 	"strconv"
+	"database/sql"
+	"log"
+	"fmt"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 // This file is safe to edit. Once it exists it will not be overwritten
@@ -29,6 +33,7 @@ func configureFlags(api *operations.StreamdigestAPI) {
 }
 
 func configureAPI(api *operations.StreamdigestAPI) http.Handler {
+	log.Printf("Configuring streamdigest...")
 	// configure the api here
 	api.ServeError = errors.ServeError
 
@@ -37,6 +42,10 @@ func configureAPI(api *operations.StreamdigestAPI) http.Handler {
 	//
 	// Example:
 	// api.Logger = log.Printf
+
+	log.Print("Connecting to Mysql server...")
+	db := connectToMysql()
+	log.Print("Connected to Mysql server.")
 
 	api.JSONConsumer = runtime.JSONConsumer()
 
@@ -47,7 +56,7 @@ func configureAPI(api *operations.StreamdigestAPI) http.Handler {
 	})
 
 	api.DigestAddClipByStreamerIDHandler = digest.AddClipByStreamerIDHandlerFunc(func(params digest.AddClipByStreamerIDParams) middleware.Responder{
-		var success = impl.AddClipToDigestByStreamerId(params.Clip, params.StreamerID)
+		var success = impl.AddClipToDigestByStreamerId(params.Clip, params.StreamerID, db)
 		if success {
 			return digest.NewAddClipByStreamerIDCreated()
 		} else {
@@ -82,4 +91,19 @@ func setupMiddlewares(handler http.Handler) http.Handler {
 // So this is a good place to plug in a panic handling middleware, logging and metrics
 func setupGlobalMiddleware(handler http.Handler) http.Handler {
 	return handler
+}
+
+func connectToMysql() *sql.DB {
+	//Open doesn't actually try a connection
+	db, err := sql.Open("mysql", "root:password@tcp(mysql:3306)/streamDigest")
+	if (err == nil) {
+		_, err := db.Exec("USE streamDigest;")
+		if err == nil {
+			return db
+		}
+		fmt.Printf("%s", err.Error())
+		panic(err)
+	}
+	fmt.Printf("%s", err.Error())
+	panic(err)
 }
